@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_values(V):
+def plot_values(V, worldshape=(4,4),figsize=(6,6)):
 	# reshape value function
-	V_sq = np.reshape(V, (4,4))
+	V_sq = np.reshape(V, worldshape)
 
 	# plot the state-value function
-	fig = plt.figure(figsize=(6, 6))
+	fig = plt.figure(figsize=figsize)
 	ax = fig.add_subplot(111)
 	im = ax.imshow(V_sq, cmap='cool')
 	for (j,i),label in np.ndenumerate(V_sq):
