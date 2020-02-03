@@ -64,10 +64,10 @@ class Agent():
             eps (float): epsilon, for epsilon-greedy action selection
         """
         state = torch.from_numpy(state).float().unsqueeze(0).to(device)
-        self.qnetwork_local.eval()
+        self.qnetwork_local.eval()                      # this change the local net to eval mode
         with torch.no_grad():
             action_values = self.qnetwork_local(state)
-        self.qnetwork_local.train()
+        self.qnetwork_local.train()                     # this just return the local net back to train mode
 
         # Epsilon-greedy action selection
         if random.random() > eps:
@@ -85,21 +85,32 @@ class Agent():
         """
         states, actions, rewards, next_states, dones = experiences
 
+        ## TODO: compute and minimize the loss
+        "*** YOUR CODE HERE ***"
         # Get max predicted Q values (for next states) from target model
-        Q_targets_next = self.qnetwork_target(next_states).detach().max(1)[0].unsqueeze(1)
+        target_q_next = self.qnetwork_target(next_states).detach().max(1)[0].unsqueeze(1)    
+        """
+        # disregard action, get best value! 
+        # why so many next states? answer: the qnetwork will return each corresponding next states action, the max will pick from each the           best action
+        
+        # explanation on detach (https://discuss.pytorch.org/t/detach-no-grad-and-requires-grad/16915/7)
+        """
         # Compute Q targets for current states 
-        Q_targets = rewards + (gamma * Q_targets_next * (1 - dones))
-
+        target_q = rewards+(gamma*target_q_next*(1-dones))
+                            
         # Get expected Q values from local model
-        Q_expected = self.qnetwork_local(states).gather(1, actions)
-
+        expected_q = self.qnetwork_local(states).gather(1, actions)
+        """
+        this uses gather instead of detach like target since it only give a s*** to action taken
+        # explanation on gather (https://stackoverflow.com/questions/50999977/what-does-the-gather-function-do-in-pytorch-in-layman-terms)
+        """
         # Compute loss
-        loss = F.mse_loss(Q_expected, Q_targets)
+        loss = F.mse_loss(expected_q, target_q)
         # Minimize the loss
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-
+                            
         # ------------------- update target network ------------------- #
         self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)                     
 
